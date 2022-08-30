@@ -1,4 +1,4 @@
-# Seed XOR
+# Hamming Backups: 2-of-3 variant of SeedXOR
 
 [![GitHub Action](https://github.com/AndreasGassmann/seed-xor-hamming/workflows/Build%2C%20Test%20and%20Analyze/badge.svg)](https://github.com/AndreasGassmann/seed-xor-hamming/actions?query=workflow%3A%22Build%2C+Test+and+Analyze%22+branch%3Amain)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AndreasGassmann_seed-xor-hamming&metric=alert_status)](https://sonarcloud.io/dashboard?id=AndreasGassmann_seed-xor-hamming)
