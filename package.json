@@ -1,6 +1,6 @@
 {
   "name": "seed-xor-hamming",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "TypeScript/JavaScript implementation of Hamming Backups: A 2-of-3 variant of SeedXOR",
   "main": "src/index.js",

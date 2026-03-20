@@ -1,3 +1,10 @@
+# 1.0.1
+
+- Removed fragile `bip39.wordlists[0]` access, use default wordlist
+- Replaced deprecated `substr` with `utils.hexToUint8Array` from seed-xor
+- Fixed typo in error message
+- Removed unnecessary array cloning in `xor_lists`
+
 # 1.0.0
 
 - Migrated to ESM (`"type": "module"`)
