@@ -1,9 +1,9 @@
-import { split, combine } from '../ts_src';
+import { test, expect } from 'vitest';
+import { split, combine } from '../ts_src/index.js';
 import { combine as combineSeedXor } from 'seed-xor';
-import * as tape from 'tape';
-import { xor_lists } from '../ts_src/hamming-backup';
+import { xor_lists, hammingBackup } from '../ts_src/hamming-backup.js';
 
-// https://github.com/Coldcard/firmware/blob/1c47b073fc933b2e216d73c980db9d3231b8dd30/docs/seed-xor.md#xor-seed-example-using-3-parts
+// Reference test vectors from: https://gitlab.com/apgoucher/hamming-backups/-/blob/master/test_vectors.py
 
 // here, X represents the 'original secret' seed phrase.
 const X =
@@ -18,20 +18,68 @@ const B =
 const C =
   'wasp clutch circle common demand naive file doll deliver family erode finish limit fortune engage allow art hurdle trim save soon marriage joy loyal';
 
-tape('create deterministic shares', async (t) => {
+// All 12 hamming_backup assertions from reference implementation
+test('hamming_backup(X, A) == (B, C)', () => {
+  expect(hammingBackup(X, A)).toEqual([B, C]);
+});
+
+test('hamming_backup(X, B) == (C, A)', () => {
+  expect(hammingBackup(X, B)).toEqual([C, A]);
+});
+
+test('hamming_backup(X, C) == (A, B)', () => {
+  expect(hammingBackup(X, C)).toEqual([A, B]);
+});
+
+test('hamming_backup(A, X) == (C, B)', () => {
+  expect(hammingBackup(A, X)).toEqual([C, B]);
+});
+
+test('hamming_backup(B, X) == (A, C)', () => {
+  expect(hammingBackup(B, X)).toEqual([A, C]);
+});
+
+test('hamming_backup(C, X) == (B, A)', () => {
+  expect(hammingBackup(C, X)).toEqual([B, A]);
+});
+
+test('hamming_backup(A, B) == (X, C)', () => {
+  expect(hammingBackup(A, B)).toEqual([X, C]);
+});
+
+test('hamming_backup(B, C) == (X, A)', () => {
+  expect(hammingBackup(B, C)).toEqual([X, A]);
+});
+
+test('hamming_backup(C, A) == (X, B)', () => {
+  expect(hammingBackup(C, A)).toEqual([X, B]);
+});
+
+test('hamming_backup(B, A) == (C, X)', () => {
+  expect(hammingBackup(B, A)).toEqual([C, X]);
+});
+
+test('hamming_backup(C, B) == (A, X)', () => {
+  expect(hammingBackup(C, B)).toEqual([A, X]);
+});
+
+test('hamming_backup(A, C) == (B, X)', () => {
+  expect(hammingBackup(A, C)).toEqual([B, X]);
+});
+
+// Split and combine tests
+
+test('create deterministic shares', async () => {
   const [share1, share2, share3] = await split(X, false);
 
-  t.equal(
-    share1,
-    'tongue put trade devote raise acoustic young opera puppy athlete earn gather obvious joke badge weapon drastic draft gossip shy drink hero vacuum fire',
+  expect(share1).toBe(
+    'amateur casual mention match shed absurd dog whisper stick distance final rival fat cushion debris tenant disagree rude hard time junior void trust federal',
   );
-  t.equal(
-    share2,
-    'era license prevent enable river box ancient pond dirt trade bundle slush ceiling bonus army lend clip climb surprise explain science cover rich couch',
+  expect(share2).toBe(
+    'gold draw upon sure rate tonight ritual toilet left enemy believe brief shrimp neglect giant slogan game chimney grant course robust abandon pride toe',
   );
-  t.equal(
-    share3,
-    'flag soup wink rocket subway happy dove arrange combine female arrive action mimic custom domain apology camera crime color hire expect suit time offer',
+  expect(share3).toBe(
+    'negative limb spot order pigeon nominee equal civil blind sketch between avocado pill volume affair odor choose snow panic chimney balcony iron trim enroll',
   );
 
   const pair1 = await combine(share1, share2);
@@ -41,98 +89,147 @@ tape('create deterministic shares', async (t) => {
   const pair5 = await combine(share3, share1);
   const pair6 = await combine(share3, share2);
 
-  t.true(pair1.includes(X));
-  t.true(pair2.includes(X));
-  t.true(pair3.includes(X));
-  t.true(pair4.includes(X));
-  t.true(pair5.includes(X));
-  t.true(pair6.includes(X));
-
-  t.end();
+  expect(pair1).toContain(X);
+  expect(pair2).toContain(X);
+  expect(pair3).toContain(X);
+  expect(pair4).toContain(X);
+  expect(pair5).toContain(X);
+  expect(pair6).toContain(X);
 });
 
-tape('create random shares and reconstruct', async (t) => {
+test('create random shares and reconstruct', async () => {
   const [share1, share2, share3] = await split(X, true);
   const pair1 = await combine(share1, share2);
   const pair2 = await combine(share1, share3);
 
-  t.true(pair1.includes(X));
-  t.true(pair2.includes(X));
-
-  t.end();
+  expect(pair1).toContain(X);
+  expect(pair2).toContain(X);
 });
 
-tape('should combine shares correctly', async (t) => {
-  t.deepEqual(await combine(A, B), [X, C]);
-  t.deepEqual(await combine(B, C), [X, A]);
-  t.deepEqual(await combine(C, A), [X, B]);
-  t.deepEqual(await combine(B, A), [C, X]);
-  t.deepEqual(await combine(C, B), [A, X]);
-  t.deepEqual(await combine(A, C), [B, X]);
-
-  t.end();
+test('should combine shares correctly', async () => {
+  expect(await combine(A, B)).toEqual([X, C]);
+  expect(await combine(B, C)).toEqual([X, A]);
+  expect(await combine(C, A)).toEqual([X, B]);
+  expect(await combine(B, A)).toEqual([C, X]);
+  expect(await combine(C, B)).toEqual([A, X]);
+  expect(await combine(A, C)).toEqual([B, X]);
 });
 
-tape('use seedxor to hamming backup', async (t) => {
-  t.equal(await combineSeedXor([A, B, C]), X);
-  t.equal(await combineSeedXor([A, C, B]), X);
-  t.equal(await combineSeedXor([B, A, C]), X);
-  t.equal(await combineSeedXor([B, C, A]), X);
-  t.equal(await combineSeedXor([C, A, B]), X);
-  t.equal(await combineSeedXor([C, B, A]), X);
+// Seed-XOR compatibility tests
 
-  t.end();
+test('use seedxor to hamming backup', async () => {
+  expect(await combineSeedXor([A, B, C])).toBe(X);
+  expect(await combineSeedXor([A, C, B])).toBe(X);
+  expect(await combineSeedXor([B, A, C])).toBe(X);
+  expect(await combineSeedXor([B, C, A])).toBe(X);
+  expect(await combineSeedXor([C, A, B])).toBe(X);
+  expect(await combineSeedXor([C, B, A])).toBe(X);
 });
 
-tape('fail if xor lists are not same length', async (t) => {
-  t.plan(1);
+// Additional 24-word test vectors from seed-xor / Coldcard docs
+const DOCS_COMBINED =
+  'silent toe meat possible chair blossom wait occur this worth option bag nurse find fish scene bench asthma bike wage world quit primary indoor';
 
-  t.throws(() => {
+const TUTORIAL_COMBINED =
+  'gain series drill glad laugh online that witness daring enough arm anger benefit honey convince cool fortune pigeon leg shallow evoke room hat knock';
+
+const ZERO_24 =
+  'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art';
+
+const ONES_24 =
+  'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo vote';
+
+const LOCAL_TEST_24_COMBINED =
+  'shift ivory empty runway path enhance pony wisdom pair absorb dinner enhance oval dove achieve soldier wing annual zebra brother consider social glance pole';
+
+test('split and recover Coldcard docs seed', async () => {
+  const [share1, share2, share3] = await split(DOCS_COMBINED, true);
+
+  expect(await combine(share1, share2)).toContain(DOCS_COMBINED);
+  expect(await combine(share2, share3)).toContain(DOCS_COMBINED);
+  expect(await combine(share3, share1)).toContain(DOCS_COMBINED);
+
+  expect(await combineSeedXor([share1, share2, share3])).toBe(DOCS_COMBINED);
+});
+
+test('split and recover Coldcard tutorial seed', async () => {
+  const [share1, share2, share3] = await split(TUTORIAL_COMBINED, true);
+
+  expect(await combine(share1, share2)).toContain(TUTORIAL_COMBINED);
+  expect(await combine(share2, share3)).toContain(TUTORIAL_COMBINED);
+  expect(await combine(share3, share1)).toContain(TUTORIAL_COMBINED);
+
+  expect(await combineSeedXor([share1, share2, share3])).toBe(
+    TUTORIAL_COMBINED,
+  );
+});
+
+test('split and recover zero seed', async () => {
+  const [share1, share2, share3] = await split(ZERO_24, true);
+
+  expect(await combine(share1, share2)).toContain(ZERO_24);
+  expect(await combine(share2, share3)).toContain(ZERO_24);
+  expect(await combine(share3, share1)).toContain(ZERO_24);
+
+  expect(await combineSeedXor([share1, share2, share3])).toBe(ZERO_24);
+});
+
+test('split and recover ones seed', async () => {
+  const [share1, share2, share3] = await split(ONES_24, true);
+
+  expect(await combine(share1, share2)).toContain(ONES_24);
+  expect(await combine(share2, share3)).toContain(ONES_24);
+  expect(await combine(share3, share1)).toContain(ONES_24);
+
+  expect(await combineSeedXor([share1, share2, share3])).toBe(ONES_24);
+});
+
+test('split and recover additional seed', async () => {
+  const [share1, share2, share3] = await split(LOCAL_TEST_24_COMBINED, true);
+
+  expect(await combine(share1, share2)).toContain(LOCAL_TEST_24_COMBINED);
+  expect(await combine(share2, share3)).toContain(LOCAL_TEST_24_COMBINED);
+  expect(await combine(share3, share1)).toContain(LOCAL_TEST_24_COMBINED);
+
+  expect(await combineSeedXor([share1, share2, share3])).toBe(
+    LOCAL_TEST_24_COMBINED,
+  );
+});
+
+// Error cases
+
+test('fail if xor lists are not same length', () => {
+  expect(() => {
     xor_lists([1], [2, 3]);
-    t.end();
-  });
+  }).toThrow();
 });
 
-tape('fail if called with invalid number of shares', async (t) => {
-  t.plan(1);
-
-  split('abandon').catch(() => {
-    t.pass();
-    t.end();
-  });
+test('fail if called with invalid mnemonic', async () => {
+  await expect(split('abandon')).rejects.toThrow();
 });
 
-tape('fail if seed is invalid length', async (t) => {
-  t.plan(1);
-
-  split(
-    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
-  ).catch(() => {
-    t.pass();
-    t.end();
-  });
+test('fail if seed is invalid length (12 words)', async () => {
+  await expect(
+    split(
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+    ),
+  ).rejects.toThrow();
 });
 
-tape('fail if share is invalid length', async (t) => {
-  t.plan(1);
-
-  combine(
-    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
-    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
-  ).catch(() => {
-    t.pass();
-    t.end();
-  });
+test('fail if share is invalid length (12 words)', async () => {
+  await expect(
+    combine(
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+    ),
+  ).rejects.toThrow();
 });
 
-tape('fail if share is invalid length', async (t) => {
-  t.plan(1);
-
-  combine(
-    'abandon',
-    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
-  ).catch(() => {
-    t.pass();
-    t.end();
-  });
+test('fail if share is invalid mnemonic', async () => {
+  await expect(
+    combine(
+      'abandon',
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+    ),
+  ).rejects.toThrow();
 });

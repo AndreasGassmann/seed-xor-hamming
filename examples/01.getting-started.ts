@@ -1,4 +1,4 @@
-import { combine, split } from '../ts_src';
+import { combine, split } from '../ts_src/index.js';
 
 const original =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art';

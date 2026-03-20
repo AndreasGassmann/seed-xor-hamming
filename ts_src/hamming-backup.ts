@@ -1,5 +1,5 @@
 import * as bip39 from 'bip39';
-import { toHexString } from './utils';
+import { utils } from 'seed-xor';
 
 // Original implementation: https://gitlab.com/apgoucher/hamming-backups/-/blob/master/implementation.py
 
@@ -70,7 +70,7 @@ const combine_halves = (half1: number[], half2: number[]): string => {
   const entropy = half1.concat(rotatedHalf2);
 
   // convert back to mnemonic (computing checksum):
-  const stringEntropy = toHexString(new Uint8Array(entropy));
+  const stringEntropy = utils.toHexString(new Uint8Array(entropy));
 
   const words = bip39.entropyToMnemonic(stringEntropy);
 

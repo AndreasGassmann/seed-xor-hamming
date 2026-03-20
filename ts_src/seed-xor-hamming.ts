@@ -1,7 +1,6 @@
 import * as bip39 from 'bip39';
 import { utils } from 'seed-xor';
-import { hammingBackup } from './hamming-backup';
-import { getDeterministicEntropyFromMnemonic } from './utils';
+import { hammingBackup } from './hamming-backup.js';
 
 // https://cp4space.hatsya.com/2021/09/10/hamming-backups-a-2-of-3-variant-of-seedxor/
 
@@ -17,8 +16,14 @@ export const split = async (
   }
 
   const share1Entropy = useRandom
-    ? await utils.getRandomEntropy()
-    : await getDeterministicEntropyFromMnemonic(mnemonic);
+    ? await utils.getRandomEntropy(32)
+    : await utils.getDeterministicEntropyFromMnemonic(
+        'Hamming ',
+        mnemonic,
+        0,
+        1,
+        32,
+      );
 
   const share1 = bip39.entropyToMnemonic(share1Entropy);
   const [share2, share3] = hammingBackup(mnemonic, share1);

@@ -1,1 +1,1 @@
-export { split, combine } from './seed-xor-hamming';
+export { split, combine } from './seed-xor-hamming.js';

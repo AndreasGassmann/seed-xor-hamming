@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.hammingBackup = exports.xor_lists = void 0;
-const bip39 = require("bip39");
-const utils_1 = require("./utils");
+import * as bip39 from 'bip39';
+import { utils } from 'seed-xor';
 // Original implementation: https://gitlab.com/apgoucher/hamming-backups/-/blob/master/implementation.py
 const _left_rotate_4 = (half2) => {
     const n = half2.length;
@@ -50,11 +47,11 @@ const combine_halves = (half1, half2) => {
     // concatenate:
     const entropy = half1.concat(rotatedHalf2);
     // convert back to mnemonic (computing checksum):
-    const stringEntropy = (0, utils_1.toHexString)(new Uint8Array(entropy));
+    const stringEntropy = utils.toHexString(new Uint8Array(entropy));
     const words = bip39.entropyToMnemonic(stringEntropy);
     return words;
 };
-const xor_lists = (...lists) => {
+export const xor_lists = (...lists) => {
     /*
       Applies the XOR function, elementwise, to lists of integers
       of equal length.
@@ -76,8 +73,7 @@ const xor_lists = (...lists) => {
     }
     return result;
 };
-exports.xor_lists = xor_lists;
-const hammingBackup = (X, A) => {
+export const hammingBackup = (X, A) => {
     /*
       This can be used to create and recover Hamming backups.
   
@@ -99,12 +95,11 @@ const hammingBackup = (X, A) => {
       */
     const [x1, x2] = split_mnemonic(X);
     const [a1, a2] = split_mnemonic(A);
-    const b1 = (0, exports.xor_lists)(a1, a2, x2);
-    const b2 = (0, exports.xor_lists)(a2, b1, x1);
-    const c1 = (0, exports.xor_lists)(b1, b2, x2);
-    const c2 = (0, exports.xor_lists)(b2, c1, x1);
+    const b1 = xor_lists(a1, a2, x2);
+    const b2 = xor_lists(a2, b1, x1);
+    const c1 = xor_lists(b1, b2, x2);
+    const c2 = xor_lists(b2, c1, x1);
     const B = combine_halves(b1, b2);
     const C = combine_halves(c1, c2);
     return [B, C];
 };
-exports.hammingBackup = hammingBackup;
