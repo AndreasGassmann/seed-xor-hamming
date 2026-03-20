@@ -33,17 +33,11 @@ const split_mnemonic = (words: string): [number[], number[]] => {
     128-bit halves (each represented as a list of 16 uint8s).
   */
 
-  // extract the entropy and check it:
-  const stringEntropy: string = bip39.mnemonicToEntropy(
-    words,
-    bip39.wordlists[0],
-  );
+  // extract the entropy:
+  const stringEntropy = bip39.mnemonicToEntropy(words);
 
   // hex string to int array:
-  const entropy: number[] = [];
-  for (let i = 0; i < stringEntropy.length; i += 2) {
-    entropy.push(parseInt(stringEntropy.substr(i, 2), 16));
-  }
+  const entropy = [...utils.hexToUint8Array(stringEntropy)];
 
   const half = Math.ceil(entropy.length / 2);
 
@@ -89,16 +83,14 @@ export const xor_lists = (...lists: number[][]): number[] => {
   */
 
   if (lists.some((list) => list.length !== lists[0].length)) {
-    throw new Error('list lenghts are not same length');
+    throw new Error('list lengths are not the same');
   }
 
-  const clones = lists.map((list) => [...list]);
+  const result = [...lists[0]];
 
-  const result = clones[0];
-
-  for (let x = 1; x < clones.length; x++) {
-    for (let y = 0; y < clones[x].length; y++) {
-      result[y] = result[y] ^ clones[x][y];
+  for (let x = 1; x < lists.length; x++) {
+    for (let y = 0; y < lists[x].length; y++) {
+      result[y] = result[y] ^ lists[x][y];
     }
   }
 
